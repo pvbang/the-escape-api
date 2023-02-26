@@ -17,18 +17,32 @@ const connection = mysql.createConnection({
 
 connection.connect(function (err) {
   if (err) throw err;
-  console.log("Connected to the database!");
+  console.log("Kết nối với database thành công!");
+});
+
+
+// login api
+app.post("/login", function (req, res) {
+  const { username, password } = req.body;
+  connection.query(
+    "SELECT * FROM Users WHERE username = ? and password = ?",
+    [username, password],
+    function (error, results) {
+      if (error) throw error;
+      res.send(results);
+    }
+  );
 });
 
 // users api
-app.get("/api/users", function (req, res) {
+app.get("/users", function (req, res) {
   connection.query("SELECT * FROM Users", function (error, results) {
     if (error) throw error;
     res.send(results);
   });
 });
 
-app.get("/api/users/:id", function (req, res) {
+app.get("/users/:id", function (req, res) {
   connection.query(
     "SELECT * FROM Users WHERE id = ?",
     [req.params.id],
@@ -39,19 +53,19 @@ app.get("/api/users/:id", function (req, res) {
   );
 });
 
-app.post("/api/users", function (req, res) {
+app.post("/users", function (req, res) {
   const { username, password } = req.body;
   connection.query(
     "INSERT INTO Users (username, password) VALUES (?, ?)",
     [username, password],
     function (error, results) {
       if (error) throw error;
-      res.send(`User added with ID: ${results.insertId}`);
+      res.send(`User mới đã được thêm với ID: ${results.insertId}`);
     }
   );
 });
 
-app.put("/api/users/:id", function (req, res) {
+app.put("/users/:id", function (req, res) {
   const { username, password } = req.body;
   connection.query(
     "UPDATE Users SET username = ?, password = ? WHERE id = ?",
@@ -63,7 +77,7 @@ app.put("/api/users/:id", function (req, res) {
   );
 });
 
-app.delete("/api/users/:id", function (req, res) {
+app.delete("/users/:id", function (req, res) {
   connection.query(
     "DELETE FROM Users WHERE id = ?",
     [req.params.id],
@@ -75,7 +89,7 @@ app.delete("/api/users/:id", function (req, res) {
 });
 
 // levels api
-app.get("/api/levels", (req, res) => {
+app.get("/levels", (req, res) => {
   const query = `SELECT * FROM Levels`;
   connection.query(query, (error, results) => {
     if (error) throw error;
@@ -83,7 +97,7 @@ app.get("/api/levels", (req, res) => {
   });
 });
 
-app.get("/api/levels/:id", (req, res) => {
+app.get("/levels/:id", (req, res) => {
   const query = `SELECT * FROM Levels WHERE id = ${req.params.id}`;
   connection.query(query, (error, results) => {
     if (error) throw error;
@@ -91,7 +105,7 @@ app.get("/api/levels/:id", (req, res) => {
   });
 });
 
-app.post("/api/levels", (req, res) => {
+app.post("/levels", (req, res) => {
   const { name, description, obstacles, items } = req.body;
   const query = `INSERT INTO Levels (name, description, obstacles, items) VALUES ('${name}', '${description}', ${obstacles}, ${items})`;
   connection.query(query, (error, results) => {
@@ -100,7 +114,7 @@ app.post("/api/levels", (req, res) => {
   });
 });
 
-app.put("/api/levels/:id", (req, res) => {
+app.put("/levels/:id", (req, res) => {
   const { name, description, obstacles, items } = req.body;
   const query = `UPDATE Levels SET name='${name}', description='${description}', obstacles=${obstacles}, items=${items}, updated_at=CURRENT_TIMESTAMP WHERE id=${req.params.id}`;
   connection.query(query, (error, results) => {
@@ -109,7 +123,7 @@ app.put("/api/levels/:id", (req, res) => {
   });
 });
 
-app.delete("/api/levels/:id", (req, res) => {
+app.delete("/levels/:id", (req, res) => {
   const query = `DELETE FROM Levels WHERE id = ${req.params.id}`;
   connection.query(query, (error, results) => {
     if (error) throw error;
@@ -118,7 +132,7 @@ app.delete("/api/levels/:id", (req, res) => {
 });
 
 // scores api
-app.get("/api/scores/:userId", (req, res) => {
+app.get("/scores/:userId", (req, res) => {
   const userId = req.params.userId;
   const query = `SELECT Scores.score, Levels.name AS level_name FROM Scores INNER JOIN Levels ON Scores.level_id = Levels.id WHERE Scores.user_id = ${userId}`;
   connection.query(query, (err, rows, fields) => {
@@ -131,7 +145,7 @@ app.get("/api/scores/:userId", (req, res) => {
   });
 });
 
-app.post("/api/scores", (req, res) => {
+app.post("/scores", (req, res) => {
   const { userId, levelId, score } = req.body;
   const query = `INSERT INTO Scores (user_id, level_id, score) VALUES (${userId}, ${levelId}, ${score})`;
   connection.query(query, (err, result) => {
@@ -144,7 +158,7 @@ app.post("/api/scores", (req, res) => {
   });
 });
 
-app.put("/api/scores/:id", (req, res) => {
+app.put("/scores/:id", (req, res) => {
   const id = req.params.id;
   const { score } = req.body;
   const query = `UPDATE Scores SET score = ${score} WHERE id = ${id}`;
@@ -158,7 +172,7 @@ app.put("/api/scores/:id", (req, res) => {
   });
 });
 
-app.delete("/api/scores/:id", (req, res) => {
+app.delete("/scores/:id", (req, res) => {
   const id = req.params.id;
   const query = `DELETE FROM Scores WHERE id = ${id}`;
   connection.query(query, (err, result) => {
@@ -172,14 +186,14 @@ app.delete("/api/scores/:id", (req, res) => {
 });
 
 // items api
-app.get("/api/items", (req, res) => {
+app.get("/items", (req, res) => {
   connection.query("SELECT * FROM Items", (error, results) => {
     if (error) throw error;
     res.send(results);
   });
 });
 
-app.get("/api/items/:id", (req, res) => {
+app.get("/items/:id", (req, res) => {
   const id = req.params.id;
   connection.query("SELECT * FROM Items WHERE id = ?", id, (error, results) => {
     if (error) throw error;
@@ -187,7 +201,7 @@ app.get("/api/items/:id", (req, res) => {
   });
 });
 
-app.post("/api/items", (req, res) => {
+app.post("/items", (req, res) => {
   const { name, description, effect } = req.body;
   const item = { name, description, effect };
   connection.query("INSERT INTO Items SET ?", item, (error, result) => {
@@ -197,7 +211,7 @@ app.post("/api/items", (req, res) => {
   });
 });
 
-app.put("/api/items/:id", (req, res) => {
+app.put("/items/:id", (req, res) => {
   const id = req.params.id;
   const { name, description, effect } = req.body;
   const item = { name, description, effect };
@@ -212,7 +226,7 @@ app.put("/api/items/:id", (req, res) => {
   );
 });
 
-app.delete("/api/items/:id", (req, res) => {
+app.delete("/items/:id", (req, res) => {
   const id = req.params.id;
   connection.query("DELETE FROM Items WHERE id = ?", id, (error, result) => {
     if (error) throw error;
@@ -221,7 +235,7 @@ app.delete("/api/items/:id", (req, res) => {
 });
 
 // obstacles api
-app.post("/api/obstacles", (req, res) => {
+app.post("/obstacles", (req, res) => {
   const { name, description, effect } = req.body;
   const sql = `INSERT INTO Obstacles (name, description, effect) VALUES (?, ?, ?)`;
   pool.query(sql, [name, description, effect], (err, results) => {
@@ -230,7 +244,7 @@ app.post("/api/obstacles", (req, res) => {
   });
 });
 
-app.get("/api/obstacles", (req, res) => {
+app.get("/obstacles", (req, res) => {
   const sql = `SELECT * FROM Obstacles`;
   pool.query(sql, (err, results) => {
     if (err) throw err;
@@ -238,7 +252,7 @@ app.get("/api/obstacles", (req, res) => {
   });
 });
 
-app.get("/api/obstacles/:id", (req, res) => {
+app.get("/obstacles/:id", (req, res) => {
   const { id } = req.params;
   const sql = `SELECT * FROM Obstacles WHERE id = ?`;
   pool.query(sql, [id], (err, results) => {
@@ -247,7 +261,7 @@ app.get("/api/obstacles/:id", (req, res) => {
   });
 });
 
-app.put("/api/obstacles/:id", (req, res) => {
+app.put("/obstacles/:id", (req, res) => {
   const { id } = req.params;
   const { name, description, effect } = req.body;
   const sql = `UPDATE Obstacles SET name = ?, description = ?, effect = ? WHERE id = ?`;
@@ -257,7 +271,7 @@ app.put("/api/obstacles/:id", (req, res) => {
   });
 });
 
-app.delete("/api/obstacles/:id", (req, res) => {
+app.delete("/obstacles/:id", (req, res) => {
   const { id } = req.params;
   const sql = `DELETE FROM Obstacles WHERE id = ?`;
   pool.query(sql, [id], (err, results) => {
@@ -267,14 +281,14 @@ app.delete("/api/obstacles/:id", (req, res) => {
 });
 
 // user-items api
-app.get("/api/user-items", (req, res) => {
+app.get("/user-items", (req, res) => {
   connection.query("SELECT * FROM User_Items", (error, results) => {
     if (error) throw error;
     res.send(results);
   });
 });
 
-app.get("/api/user-items/:id", (req, res) => {
+app.get("/user-items/:id", (req, res) => {
   const id = req.params.id;
   connection.query("SELECT * FROM User_Items WHERE id = ?", id, (error, results) => {
     if (error) throw error;
@@ -282,7 +296,7 @@ app.get("/api/user-items/:id", (req, res) => {
   });
 });
 
-app.post("/api/user-items", (req, res) => {
+app.post("/user-items", (req, res) => {
   const { user_id, item_id, quantity } = req.body;
   const user_item = { user_id, item_id, quantity };
   connection.query("INSERT INTO User_Items SET ?", user_item, (error, result) => {
@@ -292,7 +306,7 @@ app.post("/api/user-items", (req, res) => {
   });
 });
 
-app.put("/api/user-items/:id", (req, res) => {
+app.put("/user-items/:id", (req, res) => {
   const id = req.params.id;
   const { user_id, item_id, quantity } = req.body;
   const user_item = { user_id, item_id, quantity };
@@ -307,7 +321,7 @@ app.put("/api/user-items/:id", (req, res) => {
   );
 });
 
-app.delete("/api/user-items/:id", (req, res) => {
+app.delete("/user-items/:id", (req, res) => {
   const id = req.params.id;
   connection.query("DELETE FROM User_Items WHERE id = ?", id, (error, result) => {
     if (error) throw error;
@@ -315,7 +329,9 @@ app.delete("/api/user-items/:id", (req, res) => {
   });
 });
 
+
+
 //
 app.listen(port, function () {
-  console.log(`Server listening on port ${port}`);
+  console.log(`Server port: ${port}`);
 });
